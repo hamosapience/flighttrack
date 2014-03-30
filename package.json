@@ -1,0 +1,17 @@
+{
+  "name": "flighttrack",
+  "version": "0.0.0",
+  "description": "",
+  "main": "europe_all.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "request": "~2.34.0",
+    "socket.io": "~0.9.16",
+    "planefinder": "0.0.4",
+    "geolib": "~1.3.5"
+  }
+}

@@ -1,0 +1,77 @@
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://yastatic.net/jquery/1.8.3/jquery.min.js"></script>
+<script>
+
+    var planeTmpl = ""+
+    "<tr>"+
+        "<td>"+
+            "%callsign"+
+        "</td>"+
+        "<td>"+
+            "%plane_type"+
+        "</td>"+
+        "<td>"+
+            "%lat"+
+        "</td>"+
+        "<td>"+
+            "%lon"+
+        "</td>"+
+    "</tr>";
+
+    var socket = io.connect('/planefinder');
+    socket.on('traffic', function (data) {
+        var table = "";
+        var planes = data.data.sort(function(a, b){
+            if (a.callsign > b.callsign)
+                return 1;
+            if (a.callsign < b.callsign)
+                return -1;
+            // a must be equal to b
+            return 0;
+        });
+        data.data.forEach(function(item){
+            console.log(item.lon);
+            table += planeTmpl
+            .replace("%callsign", item.callsign)
+            .replace("%plane_type", item.plane_type)
+            .replace("%lat", item.lat)
+            .replace("%lon", item.lon);
+        });
+        $(".planelist tbody").get(0).innerHTML = table;
+    });
+
+    var planes = {};
+
+ 
+
+</script>
+<style>
+
+</style>
+
+<table class="planelist">
+    <thead>
+        <td>
+            Позывной
+        </td>
+        <td>
+            Тип самолёта
+        </td>
+        <td>
+            Широта
+        </td>
+        <td>
+            Долгота
+        </td>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+</body>
+</html>
