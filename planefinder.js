@@ -1,39 +1,45 @@
 var geolib = require('geolib');
 var planefinder = require('planefinder');
 var fr = require("./fr-client.js");
+var geom = require("./geom.js");
 
 var coords = {
-  latitude: 55.4506,
-  longitude: 37.3704
+  latitude: 55.75292,
+  longitude: 37.617437
 };
 var maxDistance = 50000;  // meters
 
+var center = coords;
+
+
+
+
 var bounds = geolib.getBoundsOfDistance(coords, maxDistance);
 
-console.log(bounds);
-
-var client = planefinder.createClient({
-	bounds: bounds,
-	interval: 2000
+var pfClient = planefinder.createClient({
+    bounds: bounds,
+    interval: 1000
 });
 
 var frClient = fr.createClient({
-	bounds: bounds,
-	interval: 3000
+    bounds: bounds,
+    interval: 1000
 });
-
-
-frClient.on('data', function(traffic){
-	console.log(traffic);
-});
-
-
 
 var app = require('http').createServer(handler),
-	io = require('socket.io').listen(app),
-	fs = require('fs');
+    io = require('socket.io').listen(app),
+    fs = require('fs');
 
-io.set("resource", "/");
+io.enable('browser client minification');  // send minified client
+io.enable('browser client etag');          // apply etag caching logic based on version number
+io.enable('browser client gzip');          // gzip the file
+io.set('log level', 1);
+io.set('transports', [
+    'websocket'
+  , 'htmlfile'
+  , 'xhr-polling'
+  , 'jsonp-polling'
+]);
 
 app.listen(8000);
 
@@ -51,14 +57,20 @@ function handler (req, res) {
 }
 
 io.sockets.on('connection', function(socket){
-	client.on('data', function(traffic) {
-		socket.emit('traffic', {
-			data: traffic
-		});
-	});
+    pfClient.on('data', function(traffic) {
+        socket.emit('pf-traffic', {
+            data: traffic
+        });
+    });
+    frClient.on('data', function(traffic) {
+        socket.emit('fr-traffic', {
+            data: traffic
+        });
+    });
 });
 
 
 
-client.resume();
+pfClient.resume();
+frClient.resume();
 
