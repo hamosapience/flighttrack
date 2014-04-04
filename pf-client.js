@@ -26,6 +26,7 @@ exports.Client = function(options) {
   options = options || {};
   this.faa = options.faa !== undefined ? options.faa : true;
   this.bounds = options.bounds;
+  this.filter = options.filter || function(){ return true;};
   if (!this.bounds) {
     throw new Error('Must specify bounds in options.');
   }
@@ -59,27 +60,7 @@ exports.Client.prototype.startRequest = function() {
   req.on('error', this._emitError.bind(this));
 };
 
-exports.Client.prototype._handleResponse = function(res) {
-  res.on('data', this._handleResponseData.bind(this));
-  res.on('end', this._handleResponseEnd.bind(this));
-  res.on('error', this._emitError.bind(this));
-};
-
-exports.Client.prototype._handleResponseData = function(chunk) {
-  this.body += chunk;
-};
-
-exports.Client.prototype._handleResponseEnd = function() {
-  var traffic = planefinder.parseJson(this.body);
-  this.emit('data', traffic);
-};
-
-exports.Client.prototype._emitError = function(err) {
-  this.emit('error', err);
-};
-
-
-exports.parseJson = function(reportsJson) {
+exports.Client.prototype.parseJson = function(reportsJson) {
   var planes = JSON.parse(reportsJson).planes;
   var traffic = [];
   for (var i = 0; i < planes.length; i++) {
@@ -96,8 +77,31 @@ exports.parseJson = function(reportsJson) {
         ground_speed: plane[7],
         plane_type: plane[0]
       };
-      traffic.push(aircraft);
+      if (this.filter(aircraft)){
+        traffic.push(aircraft);
+      }
     }
   }
   return traffic;
 };
+
+exports.Client.prototype._handleResponse = function(res) {
+  res.on('data', this._handleResponseData.bind(this));
+  res.on('end', this._handleResponseEnd.bind(this));
+  res.on('error', this._emitError.bind(this));
+};
+
+exports.Client.prototype._handleResponseData = function(chunk) {
+  this.body += chunk;
+};
+
+exports.Client.prototype._handleResponseEnd = function() {
+  var traffic = this.parseJson(this.body);
+  this.emit('data', traffic);
+};
+
+exports.Client.prototype._emitError = function(err) {
+  this.emit('error', err);
+};
+
+

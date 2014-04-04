@@ -17,6 +17,7 @@ exports.createClient = function(options) {
 
 exports.Client = function(options){
     this.bounds = options.bounds;
+    this.filter = options.filter || function(){ return true;};
     if (!this.bounds) {
         throw new Error('Must specify bounds in options.');
     }
@@ -53,36 +54,39 @@ exports.Client.prototype._handleResponseEnd = function() {
     var data = this.body;
     try {
         data = eval(data);
-        delete data.full_count;
-        delete data.version;
-
-        for (var id in data){
-            var plane = data[id];
-            // [HEX-CODE, LAT, LON, TRACK, ALTITUDE, SPEED, SQUAWK, RADAR, AIRCRAFT, REGISTRATION, ???, FROM, TO, FLIGHT_N?, ???, ???, ID?, ???]
-            var aircraft = {
-                hex_ident: plane[0],
-                callsign: plane[16],
-                lat: plane[1],
-                lon: plane[2],
-                altitude: plane[4],
-                track: plane[3],
-                ground_speed: plane[5],
-                plane_type: plane[8]
-            };
-            if (aircraft.lon >= this.bounds[0].longitude &&
-                aircraft.lon <= this.bounds[1].longitude &&
-                aircraft.lat >= this.bounds[0].latitude &&
-                aircraft.lat <= this.bounds[1].latitude) {
-                traffic.push(aircraft);
-            }
-
-        }
-
-        this.emit('data', traffic);
     }
     catch(e){
-        console.log(e);
+        return;
     }
+        
+    delete data.full_count;
+    delete data.version;
+
+    for (var id in data){
+        var plane = data[id];
+        // [HEX-CODE, LAT, LON, TRACK, ALTITUDE, SPEED, SQUAWK, RADAR, AIRCRAFT, REGISTRATION, ???, FROM, TO, FLIGHT_N?, ???, ???, ID?, ???]
+        var aircraft = {
+            hex_ident: plane[0],
+            callsign: plane[16],
+            lat: plane[1],
+            lon: plane[2],
+            altitude: plane[4],
+            track: plane[3],
+            ground_speed: plane[5],
+            plane_type: plane[8]
+        };
+        if ( (aircraft.lon >= this.bounds[0].longitude &&
+            aircraft.lon <= this.bounds[1].longitude &&
+            aircraft.lat >= this.bounds[0].latitude &&
+            aircraft.lat <= this.bounds[1].latitude
+            ) && this.filter(aircraft) ) {
+            traffic.push(aircraft);
+        }
+
+    }
+
+    this.emit('data', traffic);
+        
     
 };
 

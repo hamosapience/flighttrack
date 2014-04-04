@@ -27,6 +27,12 @@
         "<td>"+
             "%lon"+
         "</td>"+
+        "<td>"+
+            "%speed"+
+        "</td>"+
+        "<td>"+
+            "%altitude"+
+        "</td>"+
     "</tr>";
 
     var socket = io.connect('/');
@@ -40,12 +46,15 @@
             // a must be equal to b
             return 0;
         });
+        $("#pf-count").html(data.data.length);
         data.data.forEach(function(item){
             var t = planeTmpl;
             t = t.replace("%callsign", item.callsign);
             t = t.replace("%plane_type", item.plane_type)
             t = t.replace("%lat", item.lat);
             t = t.replace("%lon", item.lon);
+            t = t.replace("%speed", item.ground_speed);
+            t = t.replace("%altitude", item.altitude);
             table += t;
         });
         $(".pf-planelist tbody").html(table);
@@ -61,12 +70,15 @@
             // a must be equal to b
             return 0;
         });
+        $("#fr-count").html(data.data.length);
         data.data.forEach(function(item){
             table += planeTmpl
             .replace("%callsign", item.callsign)
             .replace("%plane_type", item.plane_type)
             .replace("%lat", item.lat)
-            .replace("%lon", item.lon);
+            .replace("%lon", item.lon)
+            .replace("%speed", item.ground_speed)
+            .replace("%altitude", item.altitude);
         });
         $(".fr-planelist tbody").html(table);
     });
@@ -89,10 +101,14 @@
 
 </style>
 
-<h3> Cамолёты в радиусе 50км от Москвы </h3>
+<h3> Cамолёты в радиусе 600 - 2500 км от Москвы </h3>
 
 <div class="planelist-container">
-    <h5> Данные planefinder.net </h3>
+    <h5> Данные planefinder.net </h5>
+    <div>
+        Количество самолётов:
+        <b> <span id="pf-count"></span> </b>
+    </div>
     <table class="pf-planelist table">
         <thead>
             <td>
@@ -107,14 +123,24 @@
             <td>
                 Долгота
             </td>
+            <td>
+                Скорость (в узлах)
+            </td>
+            <td>
+                Высота (в метрах)
+            </td>
         </thead>
         <tbody>
         </tbody>
     </table>
 </div>
 
-<div class="planelist-container">
+<!-- <div class="planelist-container">
     <h5> Данные flightradar24.com  </h3>
+    <div>
+        Количество самолётов:
+        <b> <span id="fr-count"></span> </b>
+    </div>
     <table class="fr-planelist table">
         <thead>
             <td>
@@ -129,11 +155,17 @@
             <td>
                 Долгота
             </td>
+            <td>
+                Скорость (в узлах)
+            </td>
+            <td>
+                Высота (в метрах)
+            </td>
         </thead>
         <tbody>
         </tbody>
     </table>
-</div>
+</div> -->
 
 </body>
 </html>
