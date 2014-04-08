@@ -61,7 +61,13 @@ exports.Client.prototype.startRequest = function() {
 };
 
 exports.Client.prototype.parseJson = function(reportsJson) {
-  var planes = JSON.parse(reportsJson).planes;
+  try {
+      var planes = JSON.parse(reportsJson).planes;
+  }
+  catch (e) {
+      console.log(e);
+      return;
+  } 
   var traffic = [];
   for (var i = 0; i < planes.length; i++) {
     var planeMap = planes[i];
