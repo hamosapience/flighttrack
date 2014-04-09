@@ -61,13 +61,14 @@ exports.Client.prototype.startRequest = function() {
 };
 
 exports.Client.prototype.parseJson = function(reportsJson) {
+  var planes;
   try {
-      var planes = JSON.parse(reportsJson).planes;
+      planes = JSON.parse(reportsJson).planes;
   }
   catch (e) {
       console.log(e);
       return;
-  } 
+  }
   var traffic = [];
   for (var i = 0; i < planes.length; i++) {
     var planeMap = planes[i];
@@ -81,7 +82,8 @@ exports.Client.prototype.parseJson = function(reportsJson) {
         altitude: plane[5],
         track: plane[6],
         ground_speed: plane[7],
-        plane_type: plane[0]
+        plane_type: plane[0],
+        flight_no: plane[10]
       };
       if (this.filter(aircraft)){
         traffic.push(aircraft);

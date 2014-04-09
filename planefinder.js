@@ -2,6 +2,7 @@ var geolib = require('geolib');
 var planefinder = require('./pf-client');
 var fr = require("./fr-client.js");
 var geom = require("./geom.js");
+var ftdb = require("./fltr-db.js");
 
 var center = {
     latitude: 55.752685,
@@ -17,24 +18,17 @@ var sectorEndPoint = {
     longitude: 67.7391
 };
 
-var maxDistance = 2500000;  // meters
-
-var testPlane = {
-    latitude: 55.5,
-    longitude: 37.6
-};
-
+var maxDistance = 500000;  // meters
 
 function sectorFilter(plane){
-    return geom.isWithinRadius(plane, center, 600000, 2500000);
+    return geom.isWithinRadius(plane, center, 0, 500000);
 }
-
 
 var bounds = geolib.getBoundsOfDistance(center, maxDistance);
 
 var pfClient = planefinder.createClient({
     bounds: bounds,
-    interval: 1000,
+    interval: 3000,
     filter: sectorFilter
 });
 
@@ -74,9 +68,10 @@ function handler (req, res) {
 }
 
 io.sockets.on('connection', function(socket){
-    pfClient.on('data', function(traffic) {
+    pfClient.on('data', function(data) {
+        ftdb.writeData(data);
         socket.emit('pf-traffic', {
-            data: traffic
+            data: data
         });
     });
     // frClient.on('data', function(traffic) {
@@ -89,5 +84,6 @@ io.sockets.on('connection', function(socket){
 
 
 pfClient.resume();
+ftdb.startCleaning(1000, 10);
 // frClient.resume();
 

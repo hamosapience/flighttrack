@@ -16,7 +16,7 @@
     var planeTmpl = ""+
     "<tr>"+
         "<td>"+
-            "%callsign"+
+            "%flight_no"+
         "</td>"+
         "<td>"+
             "%plane_type"+
@@ -49,7 +49,7 @@
         $("#pf-count").html(data.data.length);
         data.data.forEach(function(item){
             var t = planeTmpl;
-            t = t.replace("%callsign", item.callsign);
+            t = t.replace("%flight_no", item.flight_no);
             t = t.replace("%plane_type", item.plane_type)
             t = t.replace("%lat", item.lat);
             t = t.replace("%lon", item.lon);
@@ -112,7 +112,7 @@
     <table class="pf-planelist table">
         <thead>
             <td>
-                Позывной
+                Рейс
             </td>
             <td>
                 Тип самолёта
