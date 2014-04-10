@@ -13,13 +13,10 @@
 
 <script>
 
-    var planeTmpl = ""+
+    var dataTmpl = ""+
     "<tr>"+
         "<td>"+
-            "%flight_no"+
-        "</td>"+
-        "<td>"+
-            "%plane_type"+
+            "%timestamp"+
         "</td>"+
         "<td>"+
             "%lat"+
@@ -35,57 +32,62 @@
         "</td>"+
     "</tr>";
 
+    var flightTmpl = ""+
+    "<tr>"+
+        "<td>"+
+            "<a href='#' class='flight-link' data-hex-ident='%hex_ident'>"+
+                "%flight_no"+
+            "</a>"+
+        "</td>"+
+    "</tr>";
+
+
     var socket = io.connect('/');
-    socket.on('pf-traffic', function (data) {
+
+    // socket.on('pf-traffic', function (data) {
+    //     var table = "";
+    //     var planes = data.data.sort(function(a, b){
+    //         if (a.callsign > b.callsign)
+    //             return 1;
+    //         if (a.callsign < b.callsign)
+    //             return -1;
+    //         // a must be equal to b
+    //         return 0;
+    //     });
+    //     $("#pf-count").html(data.data.length);
+    //     data.data.forEach(function(item){
+    //         var t = planeTmpl;
+    //         t = t.replace("%flight_no", item.flight_no);
+    //         t = t.replace("%plane_type", item.plane_type)
+    //         t = t.replace("%lat", item.lat);
+    //         t = t.replace("%lon", item.lon);
+    //         t = t.replace("%speed", item.ground_speed);
+    //         t = t.replace("%altitude", item.altitude);
+    //         table += t;
+    //     });
+    //     $(".pf-planelist tbody").html(table);
+    // });
+
+    socket.on('flightList', function(data){
         var table = "";
-        var planes = data.data.sort(function(a, b){
-            if (a.callsign > b.callsign)
+        var flights = data.data.sort(function(a, b){
+            if (a.flight_no > b.flight_no)
                 return 1;
-            if (a.callsign < b.callsign)
+            if (a.flight_no < b.flight_no)
                 return -1;
             // a must be equal to b
             return 0;
+        });
+        data.data.forEach(function(item){
+            table += flightTmpl
+            .replace("%flight_no", item.flight_no ? item.flight_no : "нет информации")
+            .replace("%hex_ident", item["hex-ident"]);
         });
         $("#pf-count").html(data.data.length);
-        data.data.forEach(function(item){
-            var t = planeTmpl;
-            t = t.replace("%flight_no", item.flight_no);
-            t = t.replace("%plane_type", item.plane_type)
-            t = t.replace("%lat", item.lat);
-            t = t.replace("%lon", item.lon);
-            t = t.replace("%speed", item.ground_speed);
-            t = t.replace("%altitude", item.altitude);
-            table += t;
-        });
-        $(".pf-planelist tbody").html(table);
-    });
-
-    socket.on('fr-traffic', function (data) {
-        var table = "";
-        var planes = data.data.sort(function(a, b){
-            if (a.callsign > b.callsign)
-                return 1;
-            if (a.callsign < b.callsign)
-                return -1;
-            // a must be equal to b
-            return 0;
-        });
-        $("#fr-count").html(data.data.length);
-        data.data.forEach(function(item){
-            table += planeTmpl
-            .replace("%callsign", item.callsign)
-            .replace("%plane_type", item.plane_type)
-            .replace("%lat", item.lat)
-            .replace("%lon", item.lon)
-            .replace("%speed", item.ground_speed)
-            .replace("%altitude", item.altitude);
-        });
-        $(".fr-planelist tbody").html(table);
+        $(".pf-flightlist tbody").html(table);
     });
 
     var planes = {};
-
- 
 
 </script>
 <style>
@@ -109,13 +111,24 @@
         Количество самолётов:
         <b> <span id="pf-count"></span> </b>
     </div>
-    <table class="pf-planelist table">
+
+    <table class="pf-flightlist table">
         <thead>
             <td>
                 Рейс
             </td>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+</div>
+
+<div class="planelist-container flight-desc">
+    <table class="table">
+        <thead>
             <td>
-                Тип самолёта
+                Дата
             </td>
             <td>
                 Широта
@@ -135,37 +148,38 @@
     </table>
 </div>
 
-<!-- <div class="planelist-container">
-    <h5> Данные flightradar24.com  </h3>
-    <div>
-        Количество самолётов:
-        <b> <span id="fr-count"></span> </b>
-    </div>
-    <table class="fr-planelist table">
-        <thead>
-            <td>
-                Позывной
-            </td>
-            <td>
-                Тип самолёта
-            </td>
-            <td>
-                Широта
-            </td>
-            <td>
-                Долгота
-            </td>
-            <td>
-                Скорость (в узлах)
-            </td>
-            <td>
-                Высота (в метрах)
-            </td>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
-</div> -->
+<script type="text/javascript">
+
+    $(".flight-link").live('click', function(event){
+        var hex_ident = $(event.target).data("hex-ident");
+        socket.emit("startTracking", hex_ident);
+        socket.on("flightTrack-" + hex_ident, function(data){
+            var table = "";
+            console.log(data.length);
+            data.forEach(function(item){
+                var t = dataTmpl;
+                t = t.replace("%timestamp", item.timestamp)
+                t = t.replace("%lat", item.lat);
+                t = t.replace("%lon", item.lon);
+                t = t.replace("%speed", item.speed);
+                t = t.replace("%altitude", item.altitude);
+                table += t;
+            });
+            $(".flight-desc tbody").html(table);
+        });
+
+    });
+
+
+</script>
+
+
+
+
+
+
+
+
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

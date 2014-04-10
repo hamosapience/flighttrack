@@ -28,9 +28,12 @@ var bounds = geolib.getBoundsOfDistance(center, maxDistance);
 
 var pfClient = planefinder.createClient({
     bounds: bounds,
-    interval: 3000,
+    interval: 2000,
     filter: sectorFilter
 });
+
+
+var dt = new ftdb.dataTransport();
 
 var frClient = fr.createClient({
     bounds: bounds,
@@ -67,13 +70,35 @@ function handler (req, res) {
     });
 }
 
+pfClient.on('data', function(data) {
+    ftdb.writeData(data);
+});
+
 io.sockets.on('connection', function(socket){
-    pfClient.on('data', function(data) {
-        ftdb.writeData(data);
-        socket.emit('pf-traffic', {
+    // pfClient.on('data', function(data) {
+    //     socket.emit('pf-traffic', {
+    //         data: data
+    //     });
+    // });
+    var trackingInt;
+    dt.on("flightList", function(data){
+        socket.emit('flightList', {
             data: data
         });
     });
+
+    socket.on("startTracking", function(hex_ident){
+        console.log('start',  hex_ident);
+        trackingInt = dt.startFlightTracking(hex_ident, 2000);
+        dt.on("flightTrack-" + hex_ident, function(data){
+            socket.emit("flightTrack-" + hex_ident, data);
+        });
+    });
+
+    socket.on("stopTracking", function(hex_ident){
+
+    });
+
     // frClient.on('data', function(traffic) {
     //     socket.emit('fr-traffic', {
     //         data: traffic
@@ -83,7 +108,10 @@ io.sockets.on('connection', function(socket){
 
 
 
+
+
+dt.start(2000);
 pfClient.resume();
-ftdb.startCleaning(1000, 10);
+ftdb.startCleaning(3000, 10);
 // frClient.resume();
 
