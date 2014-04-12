@@ -70,16 +70,46 @@ function handler (req, res) {
     });
 }
 
+var trackListeners = {};
+var tracked = {};
+function addTrackListener(hex_ident, socket){
+    if (hex_ident in trackListeners) {
+        trackListeners[hex_ident].push(socket);
+    }
+    else {
+        trackListeners[hex_ident] = [socket];
+        dt.on("flightTrack-" + hex_ident, function(data){
+            for (var socketId in trackListeners[hex_ident]){
+                trackListeners[hex_ident][socketId].emit('flightTrack', data);
+            }
+        });
+    }
+}
+function removeTrackListeners(hex_ident, socket){
+    if (!trackListeners[hex_ident]){
+        return;
+    }
+    console.log('removeTrackListeners', hex_ident, socket.id);
+    for (var i = 0; i < trackListeners[hex_ident].length; i++){
+        if (trackListeners[hex_ident][i].id === socket.id){
+            console.log('removing', socket.id);
+            trackListeners[hex_ident].pop(i);
+            if (trackListeners[hex_ident].length === 0){
+                dt.stopFlightTracking(hex_ident);
+            }
+        }
+    }
+}
+
+
 pfClient.on('data', function(data) {
     ftdb.writeData(data);
 });
 
 io.sockets.on('connection', function(socket){
-    // pfClient.on('data', function(data) {
-    //     socket.emit('pf-traffic', {
-    //         data: data
-    //     });
-    // });
+
+    var tracking;
+
     var trackingInt;
     dt.on("flightList", function(data){
         socket.emit('flightList', {
@@ -88,14 +118,20 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on("startTracking", function(hex_ident){
-        console.log('start',  hex_ident);
-        trackingInt = dt.startFlightTracking(hex_ident, 2000);
-        dt.on("flightTrack-" + hex_ident, function(data){
-            socket.emit("flightTrack-" + hex_ident, data);
-        });
+        tracking = hex_ident;
+        trackingInt = dt.startFlightTracking(hex_ident);
+        addTrackListener(hex_ident, socket);
     });
 
-    socket.on("stopTracking", function(hex_ident){
+    socket.on("stopTracking", function(){
+        
+        removeTrackListeners(tracking, socket);
+        tracking = undefined;
+    });
+
+    socket.on("disconnect", function(){
+        removeTrackListeners(tracking, socket);
+        tracking = undefined;
 
     });
 

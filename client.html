@@ -125,6 +125,7 @@
 </div>
 
 <div class="planelist-container flight-desc">
+    <h5 id="flight-desc_no"></h5>
     <table class="table">
         <thead>
             <td>
@@ -149,16 +150,18 @@
 </div>
 
 <script type="text/javascript">
-
     $(".flight-link").live('click', function(event){
+        $("#flight-desc_no").html($(event.target).html());
         var hex_ident = $(event.target).data("hex-ident");
+        socket.emit("stopTracking");
         socket.emit("startTracking", hex_ident);
-        socket.on("flightTrack-" + hex_ident, function(data){
+        socket.on("flightTrack", function(data){
+            console.log(data);
             var table = "";
-            console.log(data.length);
             data.forEach(function(item){
                 var t = dataTmpl;
-                t = t.replace("%timestamp", item.timestamp)
+                console.log(item.timestamp);
+                t = t.replace("%timestamp", (new Date(item.timestamp).toLocaleString()));
                 t = t.replace("%lat", item.lat);
                 t = t.replace("%lon", item.lon);
                 t = t.replace("%speed", item.speed);
