@@ -32,7 +32,7 @@ exports.dataTransport = function(config){
     this.pgClient = new pg.Client(conString);
     this.pgClient.connect();
     this.redisClient = redis.createClient();
-    this.redisClient.select(0);
+    this.redisClient.select(config.redisDBID);
     this.redisClient.flushdb();
     this.cleanTimeout = config.cleanTimeout;
     this.tracked = {};
