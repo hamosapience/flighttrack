@@ -108,7 +108,7 @@ dataTransport.prototype.start = function(){
 
 dataTransport.prototype.writeDataToPg = function(plane){
     var timestamp = moment().toISOString();
-    if (!plane["hex-ident"]) {
+    if (!plane["hex_ident"]) {
         return;
     }
     this.pgClient.query(
