@@ -152,6 +152,7 @@
 <script type="text/javascript">
     $(".flight-link").live('click', function(event){
         $("#flight-desc_no").html($(event.target).html());
+        $(".flight-desc tbody").html("");
         var hex_ident = $(event.target).data("hex-ident");
         socket.emit("stopTracking");
         socket.emit("startTracking", hex_ident);
