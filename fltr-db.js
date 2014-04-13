@@ -11,7 +11,7 @@ var CLEANING_INTERVAL = 3000;
 var timezone = -(moment().zone())/60;
 
 
-// pgClient.query('DELETE FROM meteo."flight-track"');
+// 
 
 
 // pgClient.query('SELECT DISTINCT ON ("hex-ident") "hex-ident", "lat", "lon" FROM (SELECT * FROM meteo."flight-track" ORDER BY "timestamp" DESC) ordered;', function(err, data){
@@ -29,6 +29,7 @@ exports.dataTransport = function(config){
         .replace("%pgDB", config.pgDB);
     this.pgClient = new pg.Client(conString);
     this.pgClient.connect();
+    this.pgClient.query('DELETE FROM meteo."flight-track"');
     this.redisClient = redis.createClient();
     this.redisClient.select(config.redisDBID);
     this.redisClient.flushdb();
@@ -107,6 +108,9 @@ dataTransport.prototype.start = function(){
 
 dataTransport.prototype.writeDataToPg = function(plane){
     var timestamp = moment().toISOString();
+    if (!plane["hex-ident"]) {
+        return;
+    }
     this.pgClient.query(
         'INSERT INTO meteo."flight-track" ' +
         '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no) ' +
