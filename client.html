@@ -103,10 +103,10 @@
 
 </style>
 
-<h3> Cамолёты в радиусе 600 - 2500 км от Москвы </h3>
+<h3> ВС в заданном секторе </h3>
 
 <div class="planelist-container">
-    <h5> Данные planefinder.net </h5>
+    <h5> Данные flightradar.com </h5>
     <div>
         Количество самолётов:
         <b> <span id="pf-count"></span> </b>
@@ -156,14 +156,12 @@
         socket.emit("stopTracking");
         socket.emit("startTracking", hex_ident);
         socket.on("flightTrack", function(data){
-            console.log(data);
             var table = "";
             data.forEach(function(item){
                 var t = dataTmpl;
-                console.log(item.timestamp);
                 t = t.replace("%timestamp", (new Date(item.timestamp).toLocaleString()));
-                t = t.replace("%lat", item.lat);
-                t = t.replace("%lon", item.lon);
+                t = t.replace("%lat", item.latitude);
+                t = t.replace("%lon", item.longitude);
                 t = t.replace("%speed", item.speed);
                 t = t.replace("%altitude", item.altitude);
                 table += t;

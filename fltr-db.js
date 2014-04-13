@@ -13,9 +13,13 @@ pgClient.connect();
 var redisClient = redis.createClient();
 redisClient.select(0);
 
+var timezone = -(moment().zone())/60;
+console.log(timezone);
 
 redisClient.flushdb();
 // pgClient.query('DELETE FROM meteo."flight-track"');
+
+
 // pgClient.query('SELECT DISTINCT ON ("hex-ident") "hex-ident", "lat", "lon" FROM (SELECT * FROM meteo."flight-track" ORDER BY "timestamp" DESC) ordered;', function(err, data){
 //     console.log('initial');
 //     data.rows.forEach(function(item){
@@ -24,7 +28,8 @@ redisClient.flushdb();
 // });
 
 
-exports.dataTransport = function(cb){
+exports.dataTransport = function(config){
+
 };
 
 util.inherits(exports.dataTransport, events.EventEmitter);
@@ -52,16 +57,21 @@ dataTransport.prototype.getFlightTrack = function(hex_ident){
         'SELECT timestamp, lat, lon, altitude, speed FROM meteo."flight-track" t ' +
         'WHERE t."hex-ident" = \'' + hex_ident + "' ORDER BY timestamp;",
         function(err, data){
-            console.log(data);
-            that.emit("flightTrack-" + hex_ident, data.rows);
+            that.emit("flightTrack-" + hex_ident, data.rows.map(function(item){
+                var i = item;
+                i.longitude = i.lon;
+                i.latitude = i.lat;
+                i.timestamp = moment(item.timestamp).zone(0).add("hours", timezone); //добавляем часы чтобы нивелировать инциативу pg по приведении строки к локальной дате
+                return i;
+            }));
         });
 };
 
 function cleanOld(timeout){
-    var tresh = moment().subtract("minutes", timeout).toISOString();
+    var thresh = moment().subtract("minutes", timeout).zone(0).toISOString();
     pgClient.query(
         'DELETE FROM meteo."flight-track" '+
-        "WHERE timestamp < '" + tresh + "'"
+        "WHERE timestamp < '" + thresh + "'"
     );
 }
 
@@ -94,7 +104,7 @@ function writeDataToPg(plane){
         'INSERT INTO meteo."flight-track" ' +
         '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no) ' +
         'VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [plane.hex_ident, timestamp, plane.lat, plane.lon, plane.ground_speed, plane.altitude, plane.flight_no],
+        [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no],
         function(err, result) {
             if (err){
                 return console.error('error running query', err);
@@ -110,7 +120,7 @@ exports.writeData = function (data) {
         return;
     }
     data.forEach(function(plane){
-        var coordString = plane.lat + "," + plane.lon;
+        var coordString = plane.latitude + "," + plane.longitude;
         var hex_ident = plane.hex_ident;
         redisClient.get(hex_ident, function(err, cachedCoordString){
             if (cachedCoordString !== coordString){

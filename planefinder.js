@@ -3,28 +3,41 @@ var planefinder = require('./pf-client');
 var fr = require("./fr-client.js");
 var geom = require("./geom.js");
 var ftdb = require("./fltr-db.js");
+var fs = require("fs");
 
-var center = {
-    latitude: 55.752685,
-    longitude: 37.62
-};
+var configFile = "./config.dev.js";
 
-var sectorStartPoint = {
-    latitude: 58.54,
-    longitude: 38.74
-};
-var sectorEndPoint = {
-    latitude: 57.5195,
-    longitude: 67.7391
-};
+var config = JSON.parse(fs.readFileSync(configFile));
 
-var maxDistance = 500000;  // meters
+var coordList = [
+{
+    "latitude": "41.17",
+    "longitude": "12.11"
+},{
+    "latitude": "76.15",
+    "longitude": "7.01"
+},{
+    "latitude": "59.58",
+    "longitude": "33.63"
+}, {
+    "latitude": "54",
+    "longitude": "33"
+}];
 
 function sectorFilter(plane){
-    return geom.isWithinRadius(plane, center, 0, 500000);
+    // return true;
+    var p = plane;
+    p.longitude = plane.longitude.toString();
+    p.latitude = plane.latitude.toString();
+    return geolib.isPointInside(p, coordList);
 }
 
-var bounds = geolib.getBoundsOfDistance(center, maxDistance);
+var bounds = geolib.getBounds(coordList);
+bounds = [ {
+    latitude: bounds.minLat, longitude: bounds.minLng
+}, {
+    latitude: bounds.maxLat, longitude: bounds.maxLng
+} ];
 
 var pfClient = planefinder.createClient({
     bounds: bounds,
@@ -89,10 +102,8 @@ function removeTrackListeners(hex_ident, socket){
     if (!trackListeners[hex_ident]){
         return;
     }
-    console.log('removeTrackListeners', hex_ident, socket.id);
     for (var i = 0; i < trackListeners[hex_ident].length; i++){
         if (trackListeners[hex_ident][i].id === socket.id){
-            console.log('removing', socket.id);
             trackListeners[hex_ident].pop(i);
             if (trackListeners[hex_ident].length === 0){
                 dt.stopFlightTracking(hex_ident);
@@ -102,7 +113,11 @@ function removeTrackListeners(hex_ident, socket){
 }
 
 
-pfClient.on('data', function(data) {
+// pfClient.on('data', function(data) {
+//     ftdb.writeData(data);
+// });
+
+frClient.on('data', function(data) {
     ftdb.writeData(data);
 });
 
@@ -124,7 +139,6 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on("stopTracking", function(){
-        
         removeTrackListeners(tracking, socket);
         tracking = undefined;
     });
@@ -135,19 +149,14 @@ io.sockets.on('connection', function(socket){
 
     });
 
-    // frClient.on('data', function(traffic) {
-    //     socket.emit('fr-traffic', {
-    //         data: traffic
-    //     });
-    // });
 });
 
 
 
 
 
-dt.start(2000);
-pfClient.resume();
+dt.start(1000);
+// pfClient.resume();
 ftdb.startCleaning(3000, 10);
-// frClient.resume();
+frClient.resume();
 

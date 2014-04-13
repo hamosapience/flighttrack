@@ -68,23 +68,23 @@ exports.Client.prototype._handleResponseEnd = function() {
         var aircraft = {
             hex_ident: plane[0],
             callsign: plane[16],
-            lat: plane[1],
-            lon: plane[2],
+            latitude: plane[1],
+            longitude: plane[2],
             altitude: plane[4],
             track: plane[3],
             ground_speed: plane[5],
-            plane_type: plane[8]
+            plane_type: plane[8],
+            flight_no: plane[13]
         };
-        if ( (aircraft.lon >= this.bounds[0].longitude &&
-            aircraft.lon <= this.bounds[1].longitude &&
-            aircraft.lat >= this.bounds[0].latitude &&
-            aircraft.lat <= this.bounds[1].latitude
+        if ( (aircraft.longitude >= this.bounds[0].longitude &&
+            aircraft.longitude <= this.bounds[1].longitude &&
+            aircraft.latitude >= this.bounds[0].latitude &&
+            aircraft.latitude <= this.bounds[1].latitude
             ) && this.filter(aircraft) ) {
             traffic.push(aircraft);
         }
 
     }
-
     this.emit('data', traffic);
         
     

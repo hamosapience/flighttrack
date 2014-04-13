@@ -1,0 +1,8 @@
+{
+	"pgDBName": "flighttrack_dev",
+	"pgUser": "hamomd5",
+	"pgPassword": "p0stgr3s13",
+	"redisDBID": "1",
+	"port": "8010",
+	"trackTimeout": "10"
+}
