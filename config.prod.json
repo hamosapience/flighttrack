@@ -4,5 +4,5 @@
 	"pgPassword": "p0stgr3s13",
 	"redisDBID": "0",
 	"port": "8000",
-	"trackTimeout": "10"
+	"cleanTimeout": "10"
 }
