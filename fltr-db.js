@@ -4,8 +4,6 @@ var pg = require('pg');
 var events = require('events');
 var util = require('util');
 
-var conString = "postgres://hamomd5:p0stgr3s13@localhost/hamo";
-
 var TRACKING_INTERVAL = 1000;
 var FLIGHTLIST_INTERVAL = 1000;
 var CLEANING_INTERVAL = 3000;
