@@ -58,6 +58,10 @@ exports.Client.prototype._handleResponseEnd = function() {
     catch(e){
         return;
     }
+    if (!data || data === null){
+        console.log('fr data err');
+        return;
+    }
         
     delete data.full_count;
     delete data.version;
@@ -86,7 +90,6 @@ exports.Client.prototype._handleResponseEnd = function() {
 
     }
     this.emit('data', traffic);
-        
     
 };
 

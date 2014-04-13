@@ -7,16 +7,12 @@ var util = require('util');
 var conString = "postgres://hamomd5:p0stgr3s13@localhost/hamo";
 
 var TRACKING_INTERVAL = 1000;
-
-var pgClient = new pg.Client(conString);
-pgClient.connect();
-var redisClient = redis.createClient();
-redisClient.select(0);
+var FLIGHTLIST_INTERVAL = 1000;
+var CLEANING_INTERVAL = 3000;
 
 var timezone = -(moment().zone())/60;
-console.log(timezone);
 
-redisClient.flushdb();
+
 // pgClient.query('DELETE FROM meteo."flight-track"');
 
 
@@ -29,21 +25,28 @@ redisClient.flushdb();
 
 
 exports.dataTransport = function(config){
-
+    var conString = "postgres://%pgUser:%pgPassword@localhost/%pgDB"
+        .replace("%pgUser", config.pgUser)
+        .replace("%pgPassword", config.pgPassword)
+        .replace("%pgDB", config.pgDB);
+    this.pgClient = new pg.Client(conString);
+    this.pgClient.connect();
+    this.redisClient = redis.createClient();
+    this.redisClient.select(0);
+    this.redisClient.flushdb();
+    this.cleanTimeout = config.cleanTimeout;
+    this.tracked = {};
 };
 
 util.inherits(exports.dataTransport, events.EventEmitter);
 
 var dataTransport = exports.dataTransport;
 
-
-var cache = {};
-var tracked = {};
 var cleaner;
 
 dataTransport.prototype.getFlightList = function(){
     var that = this;
-    pgClient.query(
+    this.pgClient.query(
         'SELECT DISTINCT ON ("hex-ident") "flight_no", "hex-ident" FROM meteo."flight-track";',
         function(err, data){
             that.emit("flightList", data.rows);
@@ -53,7 +56,7 @@ dataTransport.prototype.getFlightList = function(){
 
 dataTransport.prototype.getFlightTrack = function(hex_ident){
     var that = this;
-    pgClient.query(
+    this.pgClient.query(
         'SELECT timestamp, lat, lon, altitude, speed FROM meteo."flight-track" t ' +
         'WHERE t."hex-ident" = \'' + hex_ident + "' ORDER BY timestamp;",
         function(err, data){
@@ -67,40 +70,46 @@ dataTransport.prototype.getFlightTrack = function(hex_ident){
         });
 };
 
-function cleanOld(timeout){
-    var thresh = moment().subtract("minutes", timeout).zone(0).toISOString();
-    pgClient.query(
+dataTransport.prototype.cleanOld = function(){
+    var thresh = moment().subtract("minutes", this.cleanTimeout).zone(0).toISOString();
+    this.pgClient.query(
         'DELETE FROM meteo."flight-track" '+
         "WHERE timestamp < '" + thresh + "'"
     );
-}
+};
+
+dataTransport.prototype.startCleaning = function(){
+    var that = this;
+    setInterval(function(){
+        that.cleanOld();
+    }, CLEANING_INTERVAL);
+};
 
 dataTransport.prototype.startFlightTracking = function(hex_ident){
-    if (hex_ident in tracked){
+    if (hex_ident in this.tracked){
         return;
     }
     var binded = this.getFlightTrack.bind(this);
     var t = setInterval(function(){
         binded(hex_ident);
     }, TRACKING_INTERVAL);
-    tracked[hex_ident] = t;
+    this.tracked[hex_ident] = t;
 
 };
 
 dataTransport.prototype.stopFlightTracking = function(hex_ident){
-    clearInterval(tracked[hex_ident]);
-    delete tracked[hex_ident];
+    clearInterval(this.tracked[hex_ident]);
+    delete this.tracked[hex_ident];
 };
 
 
-
-dataTransport.prototype.start = function(interval){
-    setInterval(this.getFlightList.bind(this), interval);
+dataTransport.prototype.start = function(){
+    setInterval(this.getFlightList.bind(this), FLIGHTLIST_INTERVAL);
 };
 
-function writeDataToPg(plane){
+dataTransport.prototype.writeDataToPg = function(plane){
     var timestamp = moment().toISOString();
-    pgClient.query(
+    this.pgClient.query(
         'INSERT INTO meteo."flight-track" ' +
         '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no) ' +
         'VALUES ($1, $2, $3, $4, $5, $6, $7)',
@@ -112,31 +121,24 @@ function writeDataToPg(plane){
         }
 
     );
-}
+};
 
-
-exports.writeData = function (data) {
+dataTransport.prototype.writeData = function (data) {
     if (!data){
         return;
     }
+    var that = this;
     data.forEach(function(plane){
         var coordString = plane.latitude + "," + plane.longitude;
         var hex_ident = plane.hex_ident;
-        redisClient.get(hex_ident, function(err, cachedCoordString){
+        that.redisClient.get(hex_ident, function(err, cachedCoordString){
             if (cachedCoordString !== coordString){
-                redisClient.set(hex_ident, coordString);
-                writeDataToPg(plane);
+                that.redisClient.set(hex_ident, coordString);
+                that.writeDataToPg(plane);
             }
         });
     });
 
-};
-
-
-exports.startCleaning = function(interval, timeout){
-    setInterval(function(){
-        cleanOld(timeout);
-    }, interval);
 };
 
 

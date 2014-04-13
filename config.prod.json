@@ -1,5 +1,5 @@
 {
-	"pgDBName": "flighttrack_prod",
+	"pgDB": "flighttrack_prod",
 	"pgUser": "hamomd5",
 	"pgPassword": "p0stgr3s13",
 	"redisDBID": "0",

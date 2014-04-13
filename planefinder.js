@@ -5,7 +5,7 @@ var geom = require("./geom.js");
 var ftdb = require("./fltr-db.js");
 var fs = require("fs");
 
-var configFile = "./config.dev.js";
+var configFile = "./config.dev.json";
 
 var config = JSON.parse(fs.readFileSync(configFile));
 
@@ -46,7 +46,7 @@ var pfClient = planefinder.createClient({
 });
 
 
-var dt = new ftdb.dataTransport();
+var dt = new ftdb.dataTransport(config);
 
 var frClient = fr.createClient({
     bounds: bounds,
@@ -69,7 +69,7 @@ io.set('transports', [
     'jsonp-polling'
 ]);
 
-app.listen(8010);
+app.listen(config.port || 8000);
 
 function handler (req, res) {
     fs.readFile(__dirname + '/client.html',
@@ -118,7 +118,7 @@ function removeTrackListeners(hex_ident, socket){
 // });
 
 frClient.on('data', function(data) {
-    ftdb.writeData(data);
+    dt.writeData(data);
 });
 
 io.sockets.on('connection', function(socket){
@@ -155,8 +155,8 @@ io.sockets.on('connection', function(socket){
 
 
 
-dt.start(1000);
+dt.start();
 // pfClient.resume();
-ftdb.startCleaning(3000, 10);
+dt.startCleaning();
 frClient.resume();
 
