@@ -33,9 +33,18 @@ exports.Client.prototype.resume = function() {
 
 exports.Client.prototype.startRequest = function() {
     this.body = '';
-    var req = http.get(frUrl, this._handleResponse.bind(this));
+    var that = this;
+    request(frUrl, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+	     that._handleResponseEnd(body);
+        }
+	if (error){
+	    console.log(error);
+	}
+    })
+    //var req = http.get(frUrl, this._handleResponse.bind(this));
 
-    req.on('error', this._emitError.bind(this));
+//    req.on('error', this._emitError.bind(this));
 };
 
 exports.Client.prototype._handleResponse = function(res) {
@@ -48,10 +57,10 @@ exports.Client.prototype._handleResponseData = function(chunk) {
     this.body += chunk;
 };
 
-exports.Client.prototype._handleResponseEnd = function() {
+exports.Client.prototype._handleResponseEnd = function(body) {
     // var traffic = planefinder.parseJson(this.body);
     var traffic = [];
-    var data = this.body;
+    var data = body || this.body;
     try {
         data = eval(data);
     }
