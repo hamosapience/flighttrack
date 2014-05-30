@@ -103,6 +103,7 @@ exports.Client.prototype._handleResponseEnd = function(body) {
 };
 
 exports.Client.prototype._emitError = function(err) {
-    this.emit('error', err);
+    console.log(err);
+    // this.emit('error', err);
 };
 

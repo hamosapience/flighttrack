@@ -5,7 +5,7 @@ var geom = require("./geom.js");
 var ftdb = require("./fltr-db.js");
 var fs = require("fs");
 
-var configFile = "./config.dev.json";
+var configFile = "./config.prod.json";
 
 var config = JSON.parse(fs.readFileSync(configFile));
 
@@ -50,7 +50,7 @@ var dt = new ftdb.dataTransport(config);
 
 var frClient = fr.createClient({
     bounds: bounds,
-    interval: 1000,
+    interval: 2000,
     filter: sectorFilter
 });
 
@@ -113,9 +113,9 @@ function removeTrackListeners(hex_ident, socket){
 }
 
 
-// pfClient.on('data', function(data) {
-//     ftdb.writeData(data);
-// });
+pfClient.on('data', function(data) {
+    dt.writeData(data);
+});
 
 frClient.on('data', function(data) {
     dt.writeData(data);
@@ -156,7 +156,7 @@ io.sockets.on('connection', function(socket){
 
 
 dt.start();
-// pfClient.resume();
 dt.startCleaning();
-frClient.resume();
+pfClient.resume();
+//frClient.resume();
 
