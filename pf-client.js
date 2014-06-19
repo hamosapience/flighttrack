@@ -56,6 +56,7 @@ exports.Client.prototype.startRequest = function() {
   options.headers = {
     'X-Requested-With': 'XMLHttpRequest'
   };
+  console.log('pf start');
   var req = http.get(options, this._handleResponse.bind(this));
   req.on('error', this._emitError.bind(this));
 };
@@ -77,8 +78,8 @@ exports.Client.prototype.parseJson = function(reportsJson) {
       var aircraft = {
         hex_ident: hex_ident,
         callsign: plane[2],
-        lat: plane[3],
-        lon: plane[4],
+        latitude: plane[3],
+        longitude: plane[4],
         altitude: plane[5],
         track: plane[6],
         ground_speed: plane[7],
@@ -104,12 +105,14 @@ exports.Client.prototype._handleResponseData = function(chunk) {
 };
 
 exports.Client.prototype._handleResponseEnd = function() {
+  console.log('pf end');
   var traffic = this.parseJson(this.body);
   this.emit('data', traffic);
 };
 
 exports.Client.prototype._emitError = function(err) {
-  this.emit('error', err);
+  console.log(err);
+  //this.emit('error', err);
 };
 
 

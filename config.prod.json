@@ -1,7 +1,7 @@
 {
-	"pgDB": "flighttrack_prod",
-	"pgUser": "hamomd5",
-	"pgPassword": "p0stgr3s13",
+	"pgDB": "meteo",
+	"pgUser": "meteo",
+	"pgPassword": "",
 	"redisDBID": "0",
 	"port": "8000",
 	"cleanTimeout": "10"
