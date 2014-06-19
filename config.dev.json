@@ -4,5 +4,9 @@
 	"pgPassword": "p0stgr3s13",
 	"redisDBID": "1",
 	"port": "8010",
-	"cleanTimeout": "10"
+	"cleanTimeout": "10",
+	"trackTableName": "meteo.flight_track",
+	"archive": true,
+	"archiveTableName": "meteo.flight_trackarj",
+	"archiveTimeout": "43200"
 }

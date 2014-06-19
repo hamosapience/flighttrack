@@ -16,6 +16,9 @@ exports.dataTransport = function(config){
         .replace("%pgPassword", config.pgPassword)
         .replace("%pgDB", config.pgDB);
     this.trackTableName = config.trackTableName;
+    this.archive = config.archive;
+    this.archiveTimeout = config.archiveTimeout;
+    this.archiveTableName = config.archiveTableName;
     this.pgClient = new pg.Client(conString);
     this.pgClient.connect();
     this.pgClient.query('DELETE FROM ' + this.trackTableName);
@@ -64,6 +67,13 @@ dataTransport.prototype.cleanOld = function(){
         'DELETE FROM ' + this.trackTableName + ' '+
         "WHERE timestamp < '" + thresh + "'"
     );
+    if (this.archive && this.archiveTimeout && this.archiveTableName){
+        var archiveTresh = moment().subtract("minutes", this.archiveTimeout).zone(0).toISOString();
+        this.pgClient.query(
+            'DELETE FROM ' + this.archiveTableName + ' '+
+            "WHERE timestamp < '" + archiveTresh + "'"
+        );
+    }
 };
 
 dataTransport.prototype.startCleaning = function(){
@@ -110,8 +120,20 @@ dataTransport.prototype.writeDataToPg = function(plane){
                 return console.error('error running query', err);
             }
         }
-
     );
+    if (this.archive && this.archiveTableName){
+        this.pgClient.query(
+            'INSERT INTO ' + this.archiveTableName + ' ' +
+            '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no) ' +
+            'VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no],
+            function(err, result) {
+                if (err){
+                    return console.error('error running query', err);
+                }
+            }
+        );
+    }
 };
 
 dataTransport.prototype.writeData = function (data) {

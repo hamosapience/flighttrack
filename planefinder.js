@@ -5,7 +5,7 @@ var geom = require("./geom.js");
 var ftdb = require("./fltr-db.js");
 var fs = require("fs");
 
-var configFile = "./config.prod.json";
+var configFile = "./config.dev.json";
 
 var config = JSON.parse(fs.readFileSync(configFile));
 
