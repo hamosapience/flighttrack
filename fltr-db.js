@@ -10,26 +10,15 @@ var CLEANING_INTERVAL = 3000;
 
 var timezone = -(moment().zone())/60;
 
-
-// 
-
-
-// pgClient.query('SELECT DISTINCT ON ("hex-ident") "hex-ident", "lat", "lon" FROM (SELECT * FROM meteo."flight-track" ORDER BY "timestamp" DESC) ordered;', function(err, data){
-//     console.log('initial');
-//     data.rows.forEach(function(item){
-//         redisClient.set(item["hex-ident"], item.lat + "," + item.lon);
-//     });
-// });
-
-
 exports.dataTransport = function(config){
     var conString = "postgres://%pgUser:%pgPassword@localhost/%pgDB"
         .replace("%pgUser", config.pgUser)
         .replace("%pgPassword", config.pgPassword)
         .replace("%pgDB", config.pgDB);
+    this.trackTableName = config.trackTableName;
     this.pgClient = new pg.Client(conString);
     this.pgClient.connect();
-    this.pgClient.query('DELETE FROM meteo."flight-track"');
+    this.pgClient.query('DELETE FROM ' + this.trackTableName);
     this.redisClient = redis.createClient();
     this.redisClient.select(config.redisDBID);
     this.redisClient.flushdb();
@@ -46,7 +35,7 @@ var cleaner;
 dataTransport.prototype.getFlightList = function(){
     var that = this;
     this.pgClient.query(
-        'SELECT DISTINCT ON ("hex-ident") "flight_no", "hex-ident" FROM meteo."flight-track";',
+        'SELECT DISTINCT ON ("hex-ident") "flight_no", "hex-ident" FROM %tableName;'.replace("%tableName", this.trackTableName),
         function(err, data){
             that.emit("flightList", data.rows);
         }
@@ -56,7 +45,7 @@ dataTransport.prototype.getFlightList = function(){
 dataTransport.prototype.getFlightTrack = function(hex_ident){
     var that = this;
     this.pgClient.query(
-        'SELECT timestamp, lat, lon, altitude, speed FROM meteo."flight-track" t ' +
+        'SELECT timestamp, lat, lon, altitude, speed FROM ' + that.trackTableName + ' t ' +
         'WHERE t."hex-ident" = \'' + hex_ident + "' ORDER BY timestamp;",
         function(err, data){
             that.emit("flightTrack-" + hex_ident, data.rows.map(function(item){
@@ -72,7 +61,7 @@ dataTransport.prototype.getFlightTrack = function(hex_ident){
 dataTransport.prototype.cleanOld = function(){
     var thresh = moment().subtract("minutes", this.cleanTimeout).zone(0).toISOString();
     this.pgClient.query(
-        'DELETE FROM meteo."flight-track" '+
+        'DELETE FROM ' + this.trackTableName + ' '+
         "WHERE timestamp < '" + thresh + "'"
     );
 };
@@ -112,7 +101,7 @@ dataTransport.prototype.writeDataToPg = function(plane){
         return;
     }
     this.pgClient.query(
-        'INSERT INTO meteo."flight-track" ' +
+        'INSERT INTO ' + this.trackTableName + ' ' +
         '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no) ' +
         'VALUES ($1, $2, $3, $4, $5, $6, $7)',
         [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no],
