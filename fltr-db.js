@@ -140,7 +140,6 @@ dataTransport.prototype.writeData = function (data) {
     if (!data){
         return;
     }
-    console.log('write');
     var that = this;
     data.forEach(function(plane){
         var coordString = plane.latitude + "," + plane.longitude;

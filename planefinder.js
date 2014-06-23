@@ -5,7 +5,7 @@ var geom = require("./geom.js");
 var ftdb = require("./fltr-db.js");
 var fs = require("fs");
 
-var configFile = "./config.dev.json";
+var configFile = "./config.prod.json";
 
 var config = JSON.parse(fs.readFileSync(configFile));
 
@@ -157,6 +157,6 @@ io.sockets.on('connection', function(socket){
 
 dt.start();
 dt.startCleaning();
-pfClient.resume();
-//frClient.resume();
+//pfClient.resume();
+frClient.resume();
 
