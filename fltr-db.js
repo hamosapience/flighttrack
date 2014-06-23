@@ -19,6 +19,7 @@ exports.dataTransport = function(config){
     this.archive = config.archive;
     this.archiveTimeout = config.archiveTimeout;
     this.archiveTableName = config.archiveTableName;
+    this.cleanArchive = config.cleanArchive;
     this.pgClient = new pg.Client(conString);
     this.pgClient.connect();
     this.pgClient.query('DELETE FROM ' + this.trackTableName);
@@ -67,7 +68,7 @@ dataTransport.prototype.cleanOld = function(){
         'DELETE FROM ' + this.trackTableName + ' '+
         "WHERE timestamp < '" + thresh + "'"
     );
-    if (this.archive && this.archiveTimeout && this.archiveTableName){
+    if (this.archive && this.archiveTimeout && this.archiveTableName && this.cleanArchive){
         var archiveTresh = moment().subtract("minutes", this.archiveTimeout).zone(0).toISOString();
         this.pgClient.query(
             'DELETE FROM ' + this.archiveTableName + ' '+
