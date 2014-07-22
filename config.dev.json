@@ -9,5 +9,5 @@
 	"archive": true,
 	"archiveTableName": "meteo.flight_trackarj",
 	"archiveTimeout": "43200",
-	"cleanArchive": true
+	"cleanArchive": false 
 }
