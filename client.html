@@ -219,7 +219,7 @@
             map.geoObjects.add(myPolyline);
             map.geoObjects.add(planePlacemark);
 
-            map.
+            map.setBounds(map.geoObjects.getBounds());
 
             $(".flight-desc tbody").html(table);
         });
