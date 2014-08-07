@@ -1,13 +1,8 @@
-// node-planefinder
-//
-// John Wiseman <jjwiseman@gmail.com> @lemonodor
-//
-// Example of requesting plane data from planefinder.net.
-
 var events = require('events');
 var http = require('http');
 var url = require('url');
 var util = require('util');
+
 
 var planefinder = exports;
 
@@ -56,7 +51,6 @@ exports.Client.prototype.startRequest = function() {
   options.headers = {
     'X-Requested-With': 'XMLHttpRequest'
   };
-  console.log('pf start');
   var req = http.get(options, this._handleResponse.bind(this));
   req.on('error', this._emitError.bind(this));
 };
@@ -105,7 +99,6 @@ exports.Client.prototype._handleResponseData = function(chunk) {
 };
 
 exports.Client.prototype._handleResponseEnd = function() {
-  console.log('pf end');
   var traffic = this.parseJson(this.body);
   this.emit('data', traffic);
 };
