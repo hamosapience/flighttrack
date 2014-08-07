@@ -8,6 +8,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="http://yastatic.net/jquery/1.8.3/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/2.3.0/es5-shim.min.js"></script>
+<script src="http://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
 
 <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 
@@ -89,16 +90,34 @@
 
     var planes = {};
 
+    var map;
+
+    ymaps.ready(function(){   
+        console.log('ready');
+        map = new ymaps.Map("map", {
+            center: [55.76, 37.64],
+            zoom: 7
+        });
+    });
+
 </script>
 <style>
     .planelist-container{
         display: inline-block;
         margin-right: 40px;
         margin-left: 20px;
+        vertical-align: top;
     }
     .planelist-container table {
         display: inline;
         width: inherit !important;
+    }
+    .flight-desc__map {
+        height: 400px;
+    }
+    #map {
+        width: 100%;
+        height: 100%;
     }
 
 </style>
@@ -126,6 +145,9 @@
 
 <div class="planelist-container flight-desc">
     <h5 id="flight-desc_no"></h5>
+    <div class="flight-desc__map">
+        <div id="map"></div>
+    </div>
     <table class="table">
         <thead>
             <td>
@@ -156,8 +178,14 @@
         var hex_ident = $(event.target).data("hex-ident");
         socket.emit("stopTracking");
         socket.emit("startTracking", hex_ident);
+
+  
+
         socket.on("flightTrack", function(data){
             var table = "";
+
+            var pointList = [];
+
             data.forEach(function(item){
                 var t = dataTmpl;
                 t = t.replace("%timestamp", (new Date(item.timestamp).toLocaleString()));
@@ -166,11 +194,42 @@
                 t = t.replace("%speed", item.speed);
                 t = t.replace("%altitude", item.altitude);
                 table += t;
+                pointList.push([item.latitude, item.longitude]);
             });
+
+            var myPolyline = new ymaps.Polyline(pointList, {
+                balloonContent: ""
+            }, {
+                balloonCloseButton: false,
+                strokeColor: "#ff0000",
+                strokeWidth: 4,
+                strokeOpacity: 0.5
+            });
+
+            var lastDataPoint = data[data.length - 1];
+
+            var planePlacemark = new ymaps.Placemark([lastDataPoint.latitude, lastDataPoint.longitude], {
+                balloonContent: ''
+            }, {
+                preset: 'islands#circleIcon',
+                iconColor: '#4d7198'
+            });
+
+            map.geoObjects.removeAll();
+            map.geoObjects.add(myPolyline);
+            map.geoObjects.add(planePlacemark);
+
+            map.
+
             $(".flight-desc tbody").html(table);
         });
 
     });
+
+
+
+
+    
 
 
 </script>
