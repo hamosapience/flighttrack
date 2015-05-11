@@ -42,7 +42,7 @@ dataTransport.prototype.getFlightList = function(){
         'SELECT DISTINCT ON ("hex-ident") "flight_no", "hex-ident" FROM %tableName;'.replace("%tableName", this.trackTableName),
         function(err, data){
             if (err){
-                return log('datatransport', err);
+                return log('datatransport' + ' getFlightList', err);
             }
             that.emit("flightList", data.rows);
         }
@@ -56,7 +56,7 @@ dataTransport.prototype.getFlightTrack = function(hex_ident){
         'WHERE t."hex-ident" = \'' + hex_ident + "' ORDER BY timestamp;",
         function(err, data){
             if (err){
-                return log('datatransport', err);
+                return log('datatransport' + ' getFlightTrack', err);
             }
             that.emit("flightTrack-" + hex_ident, data.rows.map(function(item){
                 var i = item;
@@ -81,7 +81,7 @@ dataTransport.prototype.cleanOld = function(){
             "WHERE timestamp < '" + archiveTreshold + "'"),
             function(err){
                 if (err){
-                    return log('datatransport', err);
+                    return log('datatransport' + ' getOld', err);
                 }
             }
         );
@@ -129,7 +129,7 @@ dataTransport.prototype.writeDataToPg = function(plane){
         [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no],
         function(err, result) {
             if (err){
-                return log('datatransport', err);
+                return log('datatransport' + ' writeData', err);
             }
         }
     );
@@ -141,7 +141,7 @@ dataTransport.prototype.writeDataToPg = function(plane){
             [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no],
             function(err, result) {
                 if (err){
-                    return log('datatransport', err);
+                    return log('datatransport' + ' writeDataArchive', err);
                 }
             }
         );
