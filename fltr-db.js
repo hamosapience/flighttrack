@@ -4,9 +4,9 @@ var pg = require('pg');
 var events = require('events');
 var util = require('util');
 
-var TRACKING_INTERVAL = 1000;
-var FLIGHTLIST_INTERVAL = 1000;
-var CLEANING_INTERVAL = 3000;
+var TRACKING_INTERVAL = 2000;
+var FLIGHTLIST_INTERVAL = 2000;
+var CLEANING_INTERVAL = 5000;
 
 var timezone = -(moment().zone())/60;
 
