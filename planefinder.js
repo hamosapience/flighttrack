@@ -1,31 +1,34 @@
 var geolib = require('geolib');
+var fs = require("fs");
+var http = require('http');
+var socketio = require('socket.io');
+
 var planefinder = require('./pf-client');
 var fr = require("./fr-client.js");
-var geom = require("./geom.js");
 var ftdb = require("./fltr-db.js");
-var fs = require("fs");
 
 var configFile = "./config.dev.json";
-
 var config = JSON.parse(fs.readFileSync(configFile));
 
-var coordList = [
-{
-    "latitude": "41.17",
-    "longitude": "12.11"
-},{
-    "latitude": "76.15",
-    "longitude": "7.01"
-},{
-    "latitude": "59.58",
-    "longitude": "33.63"
-}, {
-    "latitude": "54",
-    "longitude": "33"
-}];
+var defaultCoordList = [
+    {
+        "latitude": "41.17",
+        "longitude": "12.11"
+    }, {
+        "latitude": "76.15",
+        "longitude": "7.01"
+    }, {
+        "latitude": "59.58",
+        "longitude": "33.63"
+    }, {
+        "latitude": "54",
+        "longitude": "33"
+    }
+];
+
+var coordList = config.sector || defaultCoordList;
 
 function sectorFilter(plane){
-    // return true;
     var p = plane;
     p.longitude = plane.longitude.toString();
     p.latitude = plane.latitude.toString();
@@ -45,31 +48,13 @@ var pfClient = planefinder.createClient({
     filter: sectorFilter
 });
 
-
-var dt = new ftdb.dataTransport(config);
-
 var frClient = fr.createClient({
     bounds: bounds,
     interval: 2000,
     filter: sectorFilter
 });
 
-var app = require('http').createServer(handler),
-    io = require('socket.io').listen(app),
-    fs = require('fs');
-
-io.enable('browser client minification');  // send minified client
-io.enable('browser client etag');          // apply etag caching logic based on version number
-io.enable('browser client gzip');          // gzip the file
-io.set('log level', 1);
-io.set('transports', [
-    'websocket',
-    'htmlfile',
-    'xhr-polling',
-    'jsonp-polling'
-]);
-
-app.listen(config.port || 8000);
+var dt = new ftdb.dataTransport(config);
 
 function handler (req, res) {
     fs.readFile(__dirname + '/client.html',
@@ -82,6 +67,22 @@ function handler (req, res) {
         res.end(data);
     });
 }
+
+var app = http.createServer(handler);
+var io = socketio.listen(app);
+
+io.enable('browser client minification');
+io.enable('browser client etag');
+io.enable('browser client gzip');
+io.set('log level', 1);
+io.set('transports', [
+    'websocket',
+    'htmlfile',
+    'xhr-polling',
+    'jsonp-polling'
+]);
+
+app.listen(config.port || 8000);
 
 var trackListeners = {};
 var tracked = {};
@@ -111,7 +112,6 @@ function removeTrackListeners(hex_ident, socket){
         }
     }
 }
-
 
 pfClient.on('data', function(data) {
     dt.writeData(data);
@@ -150,10 +150,6 @@ io.sockets.on('connection', function(socket){
     });
 
 });
-
-
-
-
 
 dt.start();
 dt.startCleaning();

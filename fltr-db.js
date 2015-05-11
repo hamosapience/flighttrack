@@ -4,11 +4,13 @@ var pg = require('pg');
 var events = require('events');
 var util = require('util');
 
+var log = require('./logger');
+
 var TRACKING_INTERVAL = 2000;
 var FLIGHTLIST_INTERVAL = 2000;
 var CLEANING_INTERVAL = 5000;
 
-var timezone = -(moment().zone())/60;
+var timezone = -(moment().zone()) / 60;
 
 exports.dataTransport = function(config){
     var conString = "postgres://%pgUser:%pgPassword@localhost/%pgDB"
@@ -34,13 +36,14 @@ util.inherits(exports.dataTransport, events.EventEmitter);
 
 var dataTransport = exports.dataTransport;
 
-var cleaner;
-
 dataTransport.prototype.getFlightList = function(){
     var that = this;
     this.pgClient.query(
         'SELECT DISTINCT ON ("hex-ident") "flight_no", "hex-ident" FROM %tableName;'.replace("%tableName", this.trackTableName),
         function(err, data){
+            if (err){
+                return log('datatransport', err);
+            }
             that.emit("flightList", data.rows);
         }
     );
@@ -52,6 +55,9 @@ dataTransport.prototype.getFlightTrack = function(hex_ident){
         'SELECT timestamp, lat, lon, altitude, speed FROM ' + that.trackTableName + ' t ' +
         'WHERE t."hex-ident" = \'' + hex_ident + "' ORDER BY timestamp;",
         function(err, data){
+            if (err){
+                return log('datatransport', err);
+            }
             that.emit("flightTrack-" + hex_ident, data.rows.map(function(item){
                 var i = item;
                 i.longitude = i.lon;
@@ -65,14 +71,19 @@ dataTransport.prototype.getFlightTrack = function(hex_ident){
 dataTransport.prototype.cleanOld = function(){
     var thresh = moment().subtract("minutes", this.cleanTimeout).zone(0).toISOString();
     this.pgClient.query(
-        'DELETE FROM ' + this.trackTableName + ' '+
+        'DELETE FROM ' + this.trackTableName + ' ' +
         "WHERE timestamp < '" + thresh + "'"
     );
     if (this.archive && this.archiveTimeout && this.archiveTableName && this.cleanArchive){
-        var archiveTresh = moment().subtract("minutes", this.archiveTimeout).zone(0).toISOString();
+        var archiveTreshold = moment().subtract("minutes", this.archiveTimeout).zone(0).toISOString();
         this.pgClient.query(
-            'DELETE FROM ' + this.archiveTableName + ' '+
-            "WHERE timestamp < '" + archiveTresh + "'"
+            ('DELETE FROM ' + this.archiveTableName + ' ' +
+            "WHERE timestamp < '" + archiveTreshold + "'"),
+            function(err){
+                if (err){
+                    return log('datatransport', err);
+                }
+            }
         );
     }
 };
@@ -118,7 +129,7 @@ dataTransport.prototype.writeDataToPg = function(plane){
         [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no],
         function(err, result) {
             if (err){
-                return console.error('error running query', err);
+                return log('datatransport', err);
             }
         }
     );
@@ -130,7 +141,7 @@ dataTransport.prototype.writeDataToPg = function(plane){
             [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no],
             function(err, result) {
                 if (err){
-                    return console.error('error running query', err);
+                    return log('datatransport', err);
                 }
             }
         );
@@ -146,6 +157,9 @@ dataTransport.prototype.writeData = function (data) {
         var coordString = plane.latitude + "," + plane.longitude;
         var hex_ident = plane.hex_ident;
         that.redisClient.get(hex_ident, function(err, cachedCoordString){
+            if (err){
+                return log('datatransport', err);
+            }
             if (cachedCoordString !== coordString){
                 that.redisClient.set(hex_ident, coordString);
                 that.writeDataToPg(plane);
