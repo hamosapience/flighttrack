@@ -125,6 +125,9 @@ function planeDataIsValid(planeData){
             return false;
         }
     }
+    if ( (planeData.longitude != parseFloat(planeData.longitude)) || (planeData.latitude != parseFloat(planeData.latitude)) ){
+        return false;
+    }
 
     return true;
 }
