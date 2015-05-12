@@ -117,16 +117,31 @@ dataTransport.prototype.start = function(){
     setInterval(this.getFlightList.bind(this), FLIGHTLIST_INTERVAL);
 };
 
+function planeDataIsValid(planeData){
+    var fields = ['hex_ident', 'latitude', 'longitude', 'ground_speed', 'altitude', 'flight_no'];
+
+    for (var i = 0; i < fields.length; i++){
+        if (!planeData[fields[i]]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 dataTransport.prototype.writeDataToPg = function(plane){
-    var timestamp = moment().toISOString();
-    if (!plane["hex_ident"]) {
+    if (!planeDataIsValid(plane)){
         return;
     }
+
+    var timestamp = moment().toISOString();
+    var planeDataItem = [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no];
+
     this.pgClient.query(
         'INSERT INTO ' + this.trackTableName + ' ' +
         '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no) ' +
         'VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no],
+        planeDataItem,
         function(err, result) {
             if (err){
                 return log('datatransport' + ' writeData', err);
@@ -138,7 +153,7 @@ dataTransport.prototype.writeDataToPg = function(plane){
             'INSERT INTO ' + this.archiveTableName + ' ' +
             '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no) ' +
             'VALUES ($1, $2, $3, $4, $5, $6, $7)',
-            [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no],
+            planeDataItem,
             function(err, result) {
                 if (err){
                     return log('datatransport' + ' writeDataArchive', err);
