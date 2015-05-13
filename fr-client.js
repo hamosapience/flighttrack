@@ -4,8 +4,12 @@ var request = require('request');
 
 var log = require('./logger');
 
-var frUrl = "http://bma.fr24.com/zones/europe_all.js";
-
+var frUrl = "http://bma.data.fr24.com/zones/fcgi/feed.js";
+/*
+http://bma.data.fr24.com/zones/fcgi/feed.js
+    ?bounds=67.22338348289102,50.32813819638923,22.510634765624673,127.880859375
+    &faa=1&mlat=1&flarm=1&adsb=1&gnd=1&air=1&vehicles=1&estimated=1&maxage=900&gliders=1&stats=1&
+*/
 var fr = exports;
 
 exports.createClient = function(options) {
@@ -34,9 +38,29 @@ exports.Client.prototype.resume = function() {
 exports.Client.prototype.startRequest = function() {
     this.body = '';
     var that = this;
-    request(frUrl, function(error, response, body) {
+    var bounds = this.bounds;
+
+    var boundString = [bounds[0].latitude, bounds[1].latitude, bounds[0].longitude, bounds[1].longitude].join(',');
+
+    request({
+        url: frUrl,
+        qs: {
+            bounds: boundString,
+            faa: 1,
+            mlat: 1,
+            flarm: 1,
+            adsb: 1,
+            gnd: 1,
+            air: 1,
+            vehicles: 1,
+            stimated: 1,
+            maxage: 900,
+            gliders: 1,
+            stats: 1
+        }
+    }, function(error, response, body) {
         if (error) {
-            this._emitError(error);
+            that._emitError(error);
         }
         if (!error && response.statusCode == 200) {
             that._handleResponseEnd(body);
@@ -60,7 +84,7 @@ exports.Client.prototype._handleResponseEnd = function(body) {
     var traffic = [];
     var data = body || this.body;
     try {
-        data = eval(data);
+        data = JSON.parse(data);
     } catch (e) {
         this._emitError(e);
         return;
@@ -71,6 +95,7 @@ exports.Client.prototype._handleResponseEnd = function(body) {
     }
 
     delete data.full_count;
+    delete data.stats;
     delete data.version;
 
     for (var id in data) {
@@ -87,14 +112,9 @@ exports.Client.prototype._handleResponseEnd = function(body) {
             plane_type: plane[8],
             flight_no: plane[13]
         };
-        if ((aircraft.longitude >= this.bounds[0].longitude &&
-                aircraft.longitude <= this.bounds[1].longitude &&
-                aircraft.latitude >= this.bounds[0].latitude &&
-                aircraft.latitude <= this.bounds[1].latitude
-            ) && this.filter(aircraft)) {
+        if (this.filter(aircraft)){
             traffic.push(aircraft);
         }
-
     }
     this.emit('data', traffic);
 
