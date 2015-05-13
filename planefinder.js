@@ -7,7 +7,7 @@ var planefinder = require('./pf-client');
 var fr = require("./fr-client.js");
 var ftdb = require("./fltr-db.js");
 
-var configFile = "./config.dev.json";
+var configFile = "./config.prod.json";
 var config = JSON.parse(fs.readFileSync(configFile));
 
 var defaultCoordList = [
@@ -41,6 +41,9 @@ bounds = [ {
 }, {
     latitude: bounds.maxLat, longitude: bounds.maxLng
 } ];
+var frBounds = [
+    coordList[1], coordList[3]
+];
 
 var pfClient = planefinder.createClient({
     bounds: bounds,
@@ -50,8 +53,7 @@ var pfClient = planefinder.createClient({
 
 var frClient = fr.createClient({
     bounds: bounds,
-    interval: 2000,
-    filter: sectorFilter
+    interval: 2000
 });
 
 var dt = new ftdb.dataTransport(config);
@@ -153,6 +155,6 @@ io.sockets.on('connection', function(socket){
 
 dt.start();
 dt.startCleaning();
-pfClient.resume();
-// frClient.resume();
+// pfClient.resume();
+frClient.resume();
 
