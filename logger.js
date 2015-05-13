@@ -1,7 +1,7 @@
 function log(errorType, errorData){
     var errorDataString;
     try {
-        errorDataString = JSON.stringify(errorData);
+        errorDataString = (errorData).toString();
     }
     catch (e){
         errorDataString = errorData && errorData.toString();

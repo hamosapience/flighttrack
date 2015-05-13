@@ -9,8 +9,11 @@ var log = require('./logger');
 var TRACKING_INTERVAL = 2000;
 var FLIGHTLIST_INTERVAL = 2000;
 var CLEANING_INTERVAL = 5000;
+var STAT_INTERVAL = 10 *  1000;
 
 var timezone = -(moment().zone()) / 60;
+var statCounter = 0;
+var notValidCounter = 0;
 
 exports.dataTransport = function(config){
     var conString = "postgres://%pgUser:%pgPassword@localhost/%pgDB"
@@ -31,6 +34,14 @@ exports.dataTransport = function(config){
     this.cleanTimeout = config.cleanTimeout;
     this.tracked = {};
 };
+
+var statCounter = 0;
+
+setInterval(function(){
+    console.log('written: ' + statCounter + ' not valid: ' + notValidCounter);
+    statCounter = 0;
+    notValidCounter = 0;
+}, STAT_INTERVAL);
 
 util.inherits(exports.dataTransport, events.EventEmitter);
 
@@ -134,11 +145,14 @@ function planeDataIsValid(planeData){
 
 dataTransport.prototype.writeDataToPg = function(plane){
     if (!planeDataIsValid(plane)){
+    	notValidCounter++;
         return;
     }
 
     var timestamp = moment().toISOString();
     var planeDataItem = [plane.hex_ident, timestamp, plane.latitude, plane.longitude, plane.ground_speed, plane.altitude, plane.flight_no];
+
+    statCounter++;
 
     this.pgClient.query(
         'INSERT INTO ' + this.trackTableName + ' ' +
