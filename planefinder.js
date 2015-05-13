@@ -52,7 +52,7 @@ var pfClient = planefinder.createClient({
 });
 
 var frClient = fr.createClient({
-    bounds: bounds,
+    bounds: frBounds,
     interval: 2000
 });
 
