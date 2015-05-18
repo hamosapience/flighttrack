@@ -1,0 +1,51 @@
+--
+-- PostgreSQL database dump
+--
+
+SET statement_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = off;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+SET escape_string_warning = off;
+
+SET search_path = meteo, pg_catalog;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: flight_track; Type: TABLE; Schema: meteo; Owner: aisseday; Tablespace: 
+--
+
+CREATE TABLE flight_track (
+    "hex-ident" character varying(10),
+    "timestamp" timestamp without time zone,
+    lat real,
+    lon real,
+    speed integer,
+    altitude integer,
+    flight_no character varying(30),
+    departure_port character varying(4),
+    arrival_port character varying(4),
+    track numeric
+);
+
+
+ALTER TABLE meteo.flight_track OWNER TO aisseday;
+
+--
+-- Name: flight_track; Type: ACL; Schema: meteo; Owner: aisseday
+--
+
+REVOKE ALL ON TABLE flight_track FROM PUBLIC;
+REVOKE ALL ON TABLE flight_track FROM aisseday;
+GRANT ALL ON TABLE flight_track TO aisseday;
+GRANT SELECT ON TABLE flight_track TO demo;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
