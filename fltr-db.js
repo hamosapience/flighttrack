@@ -9,7 +9,7 @@ var log = require('./logger');
 var TRACKING_INTERVAL = 2000;
 var FLIGHTLIST_INTERVAL = 2000;
 var CLEANING_INTERVAL = 5000;
-var STAT_INTERVAL = 10 *  1000;
+var STAT_INTERVAL = 30 * 60 * 1000;
 
 var timezone = -(moment().zone()) / 60;
 var statCounter = 0;
