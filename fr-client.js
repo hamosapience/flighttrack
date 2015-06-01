@@ -110,7 +110,9 @@ exports.Client.prototype._handleResponseEnd = function(body) {
             track: plane[3],
             ground_speed: plane[5],
             plane_type: plane[8],
-            flight_no: plane[13]
+            flight_no: plane[13],
+	    from: plane[11],
+	    to: plane[12]
         };
         if (this.filter(aircraft)){
             traffic.push(aircraft);
