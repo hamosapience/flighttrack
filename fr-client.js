@@ -3,6 +3,7 @@ var util = require('util');
 var request = require('request');
 
 var log = require('./logger');
+var iataDecoder = require('./decode_airport');
 
 var frUrl = "http://bma.data.fr24.com/zones/fcgi/feed.js";
 /*
@@ -101,6 +102,9 @@ exports.Client.prototype._handleResponseEnd = function(body) {
     for (var id in data) {
         var plane = data[id];
         // [HEX-CODE, LAT, LON, TRACK, ALTITUDE, SPEED, SQUAWK, RADAR, AIRCRAFT, REGISTRATION, ???, FROM, TO, FLIGHT_N?, ???, ???, ID?, ???]
+        var fromIcaoCode = iataDecoder(plane[11]);
+        var toIcaoCode = iataDecoder(plane[12]);
+
         var aircraft = {
             hex_ident: plane[0],
             callsign: plane[16],
@@ -111,8 +115,8 @@ exports.Client.prototype._handleResponseEnd = function(body) {
             ground_speed: plane[5],
             plane_type: plane[8],
             flight_no: plane[13],
-	    from: plane[11],
-	    to: plane[12]
+            from: fromIcaoCode,
+            to: toIcaoCode
         };
         if (this.filter(aircraft)){
             traffic.push(aircraft);

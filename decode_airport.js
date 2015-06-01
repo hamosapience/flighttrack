@@ -17,6 +17,10 @@ icaoCodes.forEach(function(icaoCode) {
 });
 
 function decode(iataCode) {
+    if (typeof iataCode !== "string") {
+        console.log('ERROR: wrong iataCode', iataCode);
+        return;
+    }
     return iataDB[iataCode];
 }
 
