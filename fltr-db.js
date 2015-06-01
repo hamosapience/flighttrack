@@ -156,7 +156,7 @@ dataTransport.prototype.writeDataToPg = function(plane){
 
     this.pgClient.query(
         'INSERT INTO ' + this.trackTableName + ' ' +
-        '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no, departure_port, arrival_port, track) ' +
+        '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no, departure_port, arrival_port, course) ' +
         'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
         planeDataItem,
         function(err, result) {
@@ -168,7 +168,7 @@ dataTransport.prototype.writeDataToPg = function(plane){
     if (this.archive && this.archiveTableName){
         this.pgClient.query(
             'INSERT INTO ' + this.archiveTableName + ' ' +
-            '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no, departure_port, arrival_port, track) ' +
+            '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no, departure_port, arrival_port, course) ' +
             'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
             planeDataItem,
             function(err, result) {
