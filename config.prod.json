@@ -1,13 +1,28 @@
 {
 	"pgDB": "meteo",
-	"pgUser": "meteo",
+	"pgUser": "aisseday",
 	"pgPassword": "",
 	"redisDBID": "0",
-	"port": "8000",
+	"port": "3000",
 	"cleanTimeout": "10",
 	"trackTableName": "meteo.flight_track",
 	"archive": true,
 	"archiveTableName": "meteo.flight_trackarj",
 	"archiveTimeout": "43200",
-	"cleanArchive": false
+	"cleanArchive": false,
+        "sector": [
+		{
+		    "latitude": "41.17",
+		    "longitude": "12.11"
+		}, {
+		    "latitude": "76.15",
+		    "longitude": "7.01"
+		}, {
+		    "latitude": "59.58",
+		    "longitude": "33.63"
+		}, {
+		    "latitude": "54",
+		    "longitude": "33"
+		}
+	]
 }
