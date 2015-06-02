@@ -12,17 +12,17 @@
 	"cleanArchive": false,
         "sector": [
 		{
-		    "latitude": "41.17",
-		    "longitude": "12.11"
+		    "latitude": "38.1366",
+		    "longitude": "13.4417"
 		}, {
-		    "latitude": "76.15",
-		    "longitude": "7.01"
+		    "latitude": "61.8953",
+		    "longitude": "-4.2746"
 		}, {
-		    "latitude": "59.58",
-		    "longitude": "33.63"
+		    "latitude": "57.8619",
+		    "longitude": "33.0175"
 		}, {
-		    "latitude": "54",
-		    "longitude": "33"
+		    "latitude": "50.4808",
+		    "longitude": "33.5792"
 		}
 	]
 }
