@@ -63,7 +63,7 @@ dataTransport.prototype.getFlightList = function(){
 dataTransport.prototype.getFlightTrack = function(hex_ident){
     var that = this;
     this.pgClient.query(
-        'SELECT timestamp, lat, lon, altitude, speed FROM ' + that.trackTableName + ' t ' +
+        'SELECT timepoint, lat, lon, altitude_ft, speed_kt FROM ' + that.trackTableName + ' t ' +
         'WHERE t."hex-ident" = \'' + hex_ident + "' ORDER BY timestamp;",
         function(err, data){
             if (err){
@@ -83,13 +83,13 @@ dataTransport.prototype.cleanOld = function(){
     var thresh = moment().subtract("minutes", this.cleanTimeout).zone(0).toISOString();
     this.pgClient.query(
         'DELETE FROM ' + this.trackTableName + ' ' +
-        "WHERE timestamp < '" + thresh + "'"
+        "WHERE timepoint < '" + thresh + "'"
     );
     if (this.archive && this.archiveTimeout && this.archiveTableName && this.cleanArchive){
         var archiveTreshold = moment().subtract("minutes", this.archiveTimeout).zone(0).toISOString();
         this.pgClient.query(
             ('DELETE FROM ' + this.archiveTableName + ' ' +
-            "WHERE timestamp < '" + archiveTreshold + "'"),
+            "WHERE timepoint < '" + archiveTreshold + "'"),
             function(err){
                 if (err){
                     return log('datatransport' + ' getOld', err);
@@ -156,7 +156,7 @@ dataTransport.prototype.writeDataToPg = function(plane){
 
     this.pgClient.query(
         'INSERT INTO ' + this.trackTableName + ' ' +
-        '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no, departure_port, arrival_port, course) ' +
+        '("hex-ident", timepoint, lat, lon, speed_kt, altitude_ft, flight_no, departure_port, arrival_port, heading) ' +
         'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
         planeDataItem,
         function(err, result) {
@@ -168,7 +168,7 @@ dataTransport.prototype.writeDataToPg = function(plane){
     if (this.archive && this.archiveTableName){
         this.pgClient.query(
             'INSERT INTO ' + this.archiveTableName + ' ' +
-            '("hex-ident", timestamp, lat, lon, speed, altitude, flight_no, departure_port, arrival_port, course) ' +
+            '("hex-ident", timepoint, lat, lon, speed_kt, altitude_ft, flight_no, departure_port, arrival_port, heading) ' +
             'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
             planeDataItem,
             function(err, result) {
