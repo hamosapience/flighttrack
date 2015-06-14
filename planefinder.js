@@ -42,4 +42,4 @@ dt.start();
 dt.startCleaning();
 
 frClient.resume();
-
+console.log('started');
