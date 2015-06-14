@@ -42,8 +42,7 @@ exports.Client.prototype.startRequest = function() {
 
     var boundString = [bounds[0].latitude, bounds[1].latitude, bounds[0].longitude, bounds[1].longitude].join(',');
 
-    request({
-        url: frUrl,
+    request(frUrl, {
         query: {
             bounds: boundString,
             faa: 1,
