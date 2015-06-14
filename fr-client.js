@@ -1,6 +1,6 @@
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
-var request = require('request');
+var request = require('got');
 
 var log = require('./logger');
 var iataDecoder = require('./decode_airport');
@@ -11,7 +11,6 @@ http://bma.data.fr24.com/zones/fcgi/feed.js
     ?bounds=67.22338348289102,50.32813819638923,22.510634765624673,127.880859375
     &faa=1&mlat=1&flarm=1&adsb=1&gnd=1&air=1&vehicles=1&estimated=1&maxage=900&gliders=1&stats=1&
 */
-var fr = exports;
 
 exports.createClient = function(options) {
     var client = new exports.Client(options);
@@ -45,7 +44,7 @@ exports.Client.prototype.startRequest = function() {
 
     request({
         url: frUrl,
-        qs: {
+        query: {
             bounds: boundString,
             faa: 1,
             mlat: 1,
