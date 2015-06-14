@@ -1,9 +1,4 @@
-var geolib = require('geolib');
 var fs = require("fs");
-var http = require('http');
-var socketio = require('socket.io');
-
-var planefinder = require('./pf-client');
 var fr = require("./fr-client.js");
 var ftdb = require("./fltr-db.js");
 
@@ -28,28 +23,9 @@ var defaultCoordList = [
 
 var coordList = config.sector || defaultCoordList;
 
-function sectorFilter(plane){
-    var p = plane;
-    p.longitude = plane.longitude.toString();
-    p.latitude = plane.latitude.toString();
-    return geolib.isPointInside(p, coordList);
-}
-
-var bounds = geolib.getBounds(coordList);
-bounds = [ {
-    latitude: bounds.minLat, longitude: bounds.minLng
-}, {
-    latitude: bounds.maxLat, longitude: bounds.maxLng
-} ];
 var frBounds = [
     coordList[1], coordList[3]
 ];
-
-var pfClient = planefinder.createClient({
-    bounds: bounds,
-    interval: 2000,
-    filter: sectorFilter
-});
 
 var frClient = fr.createClient({
     bounds: frBounds,
@@ -58,103 +34,12 @@ var frClient = fr.createClient({
 
 var dt = new ftdb.dataTransport(config);
 
-function handler (req, res) {
-    fs.readFile(__dirname + '/client.html',
-    function (err, data) {
-        if (err) {
-            res.writeHead(500);
-            return res.end('Error loading index.html');
-        }
-        res.writeHead(200);
-        res.end(data);
-    });
-}
-
-var app = http.createServer(handler);
-var io = socketio.listen(app);
-
-io.enable('browser client minification');
-io.enable('browser client etag');
-io.enable('browser client gzip');
-io.set('log level', 1);
-io.set('transports', [
-    'websocket',
-    'htmlfile',
-    'xhr-polling',
-    'jsonp-polling'
-]);
-
-app.listen(config.port || 8000);
-
-var trackListeners = {};
-var tracked = {};
-function addTrackListener(hex_ident, socket){
-    if (hex_ident in trackListeners) {
-        trackListeners[hex_ident].push(socket);
-    }
-    else {
-        trackListeners[hex_ident] = [socket];
-        dt.on("flightTrack-" + hex_ident, function(data){
-            for (var socketId in trackListeners[hex_ident]){
-                trackListeners[hex_ident][socketId].emit('flightTrack', data);
-            }
-        });
-    }
-}
-function removeTrackListeners(hex_ident, socket){
-    if (!trackListeners[hex_ident]){
-        return;
-    }
-    for (var i = 0; i < trackListeners[hex_ident].length; i++){
-        if (trackListeners[hex_ident][i].id === socket.id){
-            trackListeners[hex_ident].pop(i);
-            if (trackListeners[hex_ident].length === 0){
-                dt.stopFlightTracking(hex_ident);
-            }
-        }
-    }
-}
-
-pfClient.on('data', function(data) {
-    dt.writeData(data);
-});
-
 frClient.on('data', function(data) {
     dt.writeData(data);
 });
 
-io.sockets.on('connection', function(socket){
-
-    var tracking;
-
-    var trackingInt;
-    dt.on("flightList", function(data){
-        socket.emit('flightList', {
-            data: data
-        });
-    });
-
-    socket.on("startTracking", function(hex_ident){
-        tracking = hex_ident;
-        trackingInt = dt.startFlightTracking(hex_ident);
-        addTrackListener(hex_ident, socket);
-    });
-
-    socket.on("stopTracking", function(){
-        removeTrackListeners(tracking, socket);
-        tracking = undefined;
-    });
-
-    socket.on("disconnect", function(){
-        removeTrackListeners(tracking, socket);
-        tracking = undefined;
-
-    });
-
-});
-
 dt.start();
 dt.startCleaning();
-// pfClient.resume();
+
 frClient.resume();
 
