@@ -57,7 +57,7 @@ exports.Client.prototype.startRequest = function() {
             gliders: 1,
             stats: 1
         }
-    }, function(error, response, body) {
+    }, function(error, body, response) {
         if (error) {
             that._emitError(error);
         }
