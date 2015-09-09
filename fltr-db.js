@@ -27,7 +27,7 @@ exports.dataTransport = function(config){
     this.cleanArchive = config.cleanArchive;
     this.pgClient = new pg.Client(conString);
     this.pgClient.connect();
-    this.pgClient.query('DELETE FROM ' + this.trackTableName);
+//    this.pgClient.query('DELETE FROM ' + this.trackTableName);
     this.redisClient = redis.createClient();
     this.redisClient.select(config.redisDBID);
     this.redisClient.flushdb();
